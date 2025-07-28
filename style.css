@@ -1,13 +1,15 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f7f7f7;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  /* jemný gradient, který navozuje romantickou atmosféru */
+  background: linear-gradient(135deg, #ffe3e3 0%, #ffe8f4 50%, #e8ecff 100%);
   color: #333;
+  min-height: 100vh;
 }
 
 #app {
   max-width: 600px;
-  margin: 0 auto;
+  margin: 32px auto;
   padding: 16px;
 }
 
@@ -20,75 +22,97 @@ form input,
 form select,
 form textarea {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   margin-top: 4px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 6px;
   box-sizing: border-box;
 }
 
 button {
-  background-color: #007bff;
-  color: white;
+  background: linear-gradient(135deg, #ff6f91, #ff9472);
+  color: #fff;
   border: none;
-  padding: 8px 16px;
+  padding: 10px 18px;
   margin-top: 12px;
-  border-radius: 4px;
+  border-radius: 24px;
   cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
 }
 
 button:hover {
-  background-color: #0056b3;
+  background: linear-gradient(135deg, #ff5a78, #ff7e5f);
 }
 
+/* chat container */
 .chat {
   display: flex;
   flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
 
 .messages {
   flex-grow: 1;
   margin-bottom: 16px;
   max-height: 400px;
   overflow-y: auto;
-  background-color: #fff;
+  background-color: #ffffff;
   padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
+/* jednotlivé zprávy */
 .msg {
   margin-bottom: 12px;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  max-width: 80%;
+  line-height: 1.4;
 }
 
 .msg.user {
-  background-color: #e8f4fd;
+  background-color: #d9eafd;
   align-self: flex-end;
+  border-bottom-right-radius: 0;
 }
 
 .msg.ai {
-  background-color: #f1f1f1;
+  background-color: #f2f2f2;
   align-self: flex-start;
+  border-bottom-left-radius: 0;
 }
 
+/* Profil AI partnera */
 .profile {
   display: flex;
   align-items: center;
   margin-bottom: 16px;
+  background-color: #ffffff;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.profile img {
+ .profile img {
   width: 64px;
   height: 64px;
   border-radius: 50%;
   margin-right: 12px;
+  object-fit: cover;
+  border: 2px solid #fff;
 }
 
+/* Paywall styl */
 .paywall {
-  background-color: #fff5f5;
-  border: 1px solid #f5c2c2;
+  background-color: #ffe6e6;
+  border: 1px solid #ffcccc;
   padding: 16px;
-  border-radius: 4px;
+  border-radius: 8px;
+  text-align: center;
 }

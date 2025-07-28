@@ -26,6 +26,10 @@ function createElement(tag, attrs = {}, ...children) {
 
 function saveProfile(profile) {
   localStorage.setItem('userProfile', JSON.stringify(profile));
+  // pokud uživatel zadal API klíč, ulož ho zvlášť pro pozdější použití
+  if (profile.apiKey) {
+    localStorage.setItem('openaiApiKey', profile.apiKey);
+  }
 }
 
 function loadProfile() {
@@ -74,9 +78,38 @@ function buildPrompt(user, ai) {
 }
 
 async function callAiApi(prompt, messages) {
-  // TODO: Zde použij vlastní API klíč a volání na OpenAI nebo jiný model.
-  // Pro demonstraci vracíme jednoduchou odpověď.
-  return 'To zní zajímavě! Vyprávěj mi o tom víc.';
+  // Pokus se zavolat OpenAI API, pokud uživatel zadal platný API klíč.
+  const apiKey = localStorage.getItem('openaiApiKey');
+  if (!apiKey) {
+    // fallback odpověď, pokud není k dispozici klíč
+    return 'To zní zajímavě! Vyprávěj mi o tom víc.';
+  }
+  try {
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: prompt },
+          ...messages.map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }))
+        ],
+        max_tokens: 120,
+        temperature: 0.8
+      })
+    });
+    const data = await resp.json();
+    if (data && data.choices && data.choices[0] && data.choices[0].message) {
+      return data.choices[0].message.content.trim();
+    }
+  } catch (err) {
+    console.error('Chyba volání AI API', err);
+  }
+  // fallback, když selže volání
+  return 'Hmm, zajímavé! Povíš mi o tom více?';
 }
 
 function App() {
@@ -90,7 +123,8 @@ function App() {
 }
 
 function renderOnboarding(root) {
-  const state = { nickname: '', age: '', region: '', hobbies: '', seeking: '', bio: '' };
+  // state obsahuje i API klíč pro OpenAI, který je volitelný
+  const state = { nickname: '', age: '', region: '', hobbies: '', seeking: '', bio: '', apiKey: '' };
   function update(e) {
     state[e.target.name] = e.target.value;
   }
@@ -112,10 +146,13 @@ function renderOnboarding(root) {
       createElement('select', { name: 'seeking', oninput: update },
         createElement('option', { value: 'vážný vztah' }, 'Vážný vztah'),
         createElement('option', { value: 'kamarádství' }, 'Kamarádství'),
-        createElement('option', { value: 'flirt' }, 'Flirt')
+        createElement('option', { value: 'flirt' }, 'Flirt'),
+        createElement('option', { value: 'intimní vztah' }, 'Intimní vztah')
       )
     ),
     createElement('label', {}, 'Krátký popis', createElement('textarea', { name: 'bio', oninput: update })),
+    // pole pro zadání API klíče je volitelné a nebude sdíleno nikam jinam
+    createElement('label', {}, 'OpenAI API klíč (nepovinné)', createElement('input', { name: 'apiKey', type: 'password', placeholder: 'sk-...', oninput: update })),
     createElement('button', { type: 'submit' }, 'Pokračovat do chatu')
   );
   root.appendChild(form);
