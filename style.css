@@ -133,8 +133,8 @@ button:hover {
 }
 
  .profile img {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   margin-right: 12px;
   object-fit: cover;
@@ -166,8 +166,8 @@ button:hover {
   align-items: center;
 }
 .profileCard img {
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 8px;
@@ -177,6 +177,30 @@ button:hover {
   margin-top: auto;
 }
 
+/* Vylepšená vstupní oblast pro chat – podobná profesionálním messengerům */
+.inputArea {
+  display: flex;
+  align-items: center;
+  border: 1px solid #e0e0e0;
+  border-radius: 24px;
+  overflow: hidden;
+  background-color: #fff;
+}
+.inputArea input {
+  flex-grow: 1;
+  border: none;
+  padding: 12px 16px;
+  font-size: 14px;
+}
+.inputArea input:focus {
+  outline: none;
+}
+.inputArea button {
+  margin: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
 /* Paywall styl */
 .paywall {
   background-color: #ffe6e6;
@@ -184,4 +208,22 @@ button:hover {
   padding: 16px;
   border-radius: 8px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.paywall button {
+  background: linear-gradient(135deg, #ff6f91, #ff9472);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+.paywall button:hover {
+  background: linear-gradient(135deg, #ff5a78, #ff7e5f);
 }

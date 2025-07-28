@@ -93,12 +93,33 @@ function loadPaid() {
   return localStorage.getItem('paid') === 'true';
 }
 
+// Nové funkce pro sledování kreditu na zprávy. Každý uživatel má
+// určitý počet kreditů (počet zpráv, které může poslat). Po vyčerpání
+// kreditů se zobrazí paywall. Kredity ukládáme do localStorage jako číslo.
+function saveCredits(credits) {
+  localStorage.setItem('credits', credits.toString());
+}
+function loadCredits() {
+  const c = localStorage.getItem('credits');
+  return c ? parseInt(c, 10) : 0;
+}
+
 function generateAiProfile(user) {
   // jednoduché jméno a věk
   const names = ['Eliška', 'Veronika', 'Katka', 'Míša', 'Sabina', 'Tereza'];
   const name = names[Math.floor(Math.random() * names.length)];
   const age = parseInt(user.age) - 2 + Math.floor(Math.random() * 5);
   const style = STYLES[Math.floor(Math.random() * STYLES.length)];
+  // předpřipravené lore texty pro pestřejší biografie
+  const lores = [
+    'miluje dlouhé procházky a sledování romantických filmů',
+    'ráda chodí po horách a sbírá bylinky',
+    'je vášnivá čtenářka fantasy knih a komiksů',
+    'miluje vaření exotických jídel a zkouší nové recepty',
+    'ráda chodí na koncerty a tančí do rána',
+    'je nadšená cestovatelka, která ráda objevuje nová místa'
+  ];
+  const lore = lores[Math.floor(Math.random() * lores.length)];
   return {
     name,
     age,
@@ -106,7 +127,7 @@ function generateAiProfile(user) {
     // Use picsum.photos for a placeholder image; using the name as seed ensures
     // the same partner always has the same photo without requiring a backend.
     photo: `https://picsum.photos/seed/${name}/200/200`,
-    bio: `Jsem ${name}, bydlím blízko ${user.region}. Mám ráda podobné koníčky jako ty: ${user.hobbies}.`
+    bio: `Jsem ${name}, bydlím blízko ${user.region}. ${lore}. Také máme společné koníčky: ${user.hobbies}.`
   };
 }
 
@@ -269,13 +290,15 @@ function renderChat(root, user) {
     saveSelectedAi(ai);
   }
   let messages = loadChat();
-  let paid = loadPaid();
-  // pokud má uživatel jiný profil, resetuj historii
+  // Počet dostupných kreditů na zprávy. Pokud není uložený, nastav na 5 (základní zdarma balíček).
+  let credits = loadCredits();
+  // pokud má uživatel jiný profil, resetuj historii a kredity
   if (!localStorage.getItem('aiName') || localStorage.getItem('aiName') !== ai.name) {
     messages = [];
     saveChat(messages);
-    savePaid(false);
-    paid = false;
+    // reset kreditů na 5 pro nový chat
+    credits = 5;
+    saveCredits(credits);
     localStorage.setItem('aiName', ai.name);
   }
   const container = createElement('div', { className: 'chat' });
@@ -293,13 +316,29 @@ function renderChat(root, user) {
   const sendBtn = createElement('button', { onclick: onSend }, 'Odeslat');
   const inputArea = createElement('div', { className: 'inputArea' }, inputEl, sendBtn);
 
-  const paywall = createElement(
-    'div',
-    { className: 'paywall' },
-    createElement('h4', {}, 'Je mi to líto…'),
-    createElement('p', {}, 'Tvůj kredit na zprávy právě vypršel. Toto je oznámení od našeho webu. Pokud chceš pokračovat v našem poznávání, stačí si zakoupit další kredit.'),
-    createElement('button', { onclick: redirectToCheckout }, 'Zaplatit a pokračovat')
-  );
+  // Vytvoření paywallu s nabídkou balíčků
+  function createPaywall() {
+    const wrapper = createElement('div', { className: 'paywall' },
+      createElement('h4', {}, 'Tvůj kredit vypršel'),
+      createElement('p', {}, 'Vyber si jeden z dostupných balíčků, abys mohl(a) pokračovat v chatu:'),
+      createPackageButton('5 zpráv za 50 Kč', 5, 50),
+      createPackageButton('15 zpráv za 150 Kč', 15, 150),
+      createPackageButton('30 + 15 bonusových zpráv za 300 Kč', 45, 300)
+    );
+    return wrapper;
+  }
+  function createPackageButton(label, msgs, price) {
+    return createElement('button', {
+      onclick: () => {
+        // přidej kredity a skryj paywall
+        credits = msgs;
+        saveCredits(credits);
+        // obnov input area
+        if (paywall.parentNode) paywall.parentNode.replaceChild(inputArea, paywall);
+      }
+    }, label);
+  }
+  let paywall = null;
 
   function renderMessages() {
     messagesEl.innerHTML = '';
@@ -312,15 +351,17 @@ function renderChat(root, user) {
   function onSend() {
     const text = inputEl.value.trim();
     if (!text) return;
+    // ulož uživatelskou zprávu a sniž kredit
     messages.push({ sender: 'user', text });
     saveChat(messages);
+    credits -= 1;
+    saveCredits(credits);
     inputEl.value = '';
     renderMessages();
-    // Kontrola limitu
-    const userCount = messages.filter(m => m.sender === 'user').length;
-    if (!paid && userCount >= 5) {
-      // zobrazit výzvu a zastavit
-      messagesEl.parentNode.replaceChild(paywall, inputArea);
+    // pokud došel kredit, zobraz paywall a zastav
+    if (credits <= 0) {
+      paywall = createPaywall();
+      container.appendChild(paywall);
       return;
     }
     // generuj odpověď
@@ -331,13 +372,7 @@ function renderChat(root, user) {
       renderMessages();
     });
   }
-  function redirectToCheckout() {
-    // Simulace zaplacení: nastav paid na true
-    savePaid(true);
-    paid = true;
-    // obnovit input
-    paywall.parentNode.replaceChild(inputArea, paywall);
-  }
+  // No need for redirectToCheckout anymore; balíčky zpracovávají kredity přímo
   // Proaktivní zprávy
   setInterval(() => {
     const now = new Date();
@@ -366,7 +401,9 @@ function renderChat(root, user) {
   // Sestavení DOM
   container.appendChild(profileEl);
   container.appendChild(messagesEl);
-  if (!paid && messages.filter(m => m.sender === 'user').length >= 5) {
+  // Pokud došly kredity, zobraz paywall místo vstupního pole
+  if (credits <= 0) {
+    paywall = createPaywall();
     container.appendChild(paywall);
   } else {
     container.appendChild(inputArea);
