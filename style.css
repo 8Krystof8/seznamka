@@ -1,0 +1,94 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+}
+
+#app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+form label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+form input,
+form select,
+form textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  margin-top: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+}
+
+.messages {
+  flex-grow: 1;
+  margin-bottom: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: #fff;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.msg {
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.msg.user {
+  background-color: #e8f4fd;
+  align-self: flex-end;
+}
+
+.msg.ai {
+  background-color: #f1f1f1;
+  align-self: flex-start;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.profile img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.paywall {
+  background-color: #fff5f5;
+  border: 1px solid #f5c2c2;
+  padding: 16px;
+  border-radius: 4px;
+}
