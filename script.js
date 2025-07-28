@@ -7,6 +7,45 @@ const STYLES = [
   { tone: 'sarkastický', agrees: false }
 ];
 
+/**
+ * Creates a simple top navigation bar with links to the main sections of the app. This
+ * nav is inserted into the provided root container and will persist across
+ * screens. Each button triggers the appropriate render function when clicked.
+ */
+function renderNav(root, user) {
+  const nav = createElement('nav', { className: 'navbar' },
+    createElement('button', { onclick: () => {
+      root.innerHTML = '';
+      // reset selected AI so user can edit profile again
+      saveSelectedAi(null);
+      renderOnboarding(root);
+    } }, 'Profil'),
+    createElement('button', { onclick: () => {
+      root.innerHTML = '';
+      renderSelection(root, user);
+    } }, 'Partnerky'),
+    createElement('button', { onclick: () => {
+      root.innerHTML = '';
+      renderAbout(root, user);
+    } }, 'O nás')
+  );
+  return nav;
+}
+
+/**
+ * Renders a simple "About" section describing the app. This gives a more
+ * professional feel and reassures users about privacy and purpose.
+ */
+function renderAbout(root, user) {
+  const container = createElement('div', { className: 'about' },
+    createElement('h2', {}, 'O projektu AI Seznamka'),
+    createElement('p', {}, 'AI Seznamka je demo aplikace, která spojuje uživatele s personalizovanou AI partnerkou. Cílem je ukázat možnosti AI v přátelském a romantickém chatu. Vaše data zůstávají pouze ve vašem prohlížeči (localStorage) a nikam se neposílají.'),
+    createElement('p', {}, 'Kdykoliv se můžete vrátit zpět na výběr partnerky nebo upravit svůj profil pomocí navigace nahoře.')
+  );
+  root.appendChild(renderNav(root, user));
+  root.appendChild(container);
+}
+
 function createElement(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
   Object.entries(attrs).forEach(([key, val]) => {
@@ -94,7 +133,8 @@ async function callAiApi(prompt, messages) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        // Použij levnější model gpt‑4.1‑nano, který je vhodný pro chatování
+        model: 'gpt-4.1-nano',
         messages: [
           { role: 'system', content: prompt },
           ...messages.map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }))
@@ -182,6 +222,8 @@ function loadSelectedAi() {
 function renderSelection(root, user) {
   // clear root first
   root.innerHTML = '';
+  // přidáme navigaci pro lepší orientaci
+  root.appendChild(renderNav(root, user));
   // generate a few AI partner profiles to choose from
   const candidates = [];
   const usedNames = new Set();
@@ -216,6 +258,10 @@ function renderSelection(root, user) {
 }
 
 function renderChat(root, user) {
+  // vyčisti kořen a přidej navigaci
+  root.innerHTML = '';
+  root.appendChild(renderNav(root, user));
+
   // Either use the previously selected AI partner or generate a new one if none is saved.
   let ai = loadSelectedAi();
   if (!ai) {
