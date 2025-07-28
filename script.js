@@ -64,7 +64,9 @@ function generateAiProfile(user) {
     name,
     age,
     style,
-    photo: 'https://thispersondoesnotexist.com/image',
+    // Use picsum.photos for a placeholder image; using the name as seed ensures
+    // the same partner always has the same photo without requiring a backend.
+    photo: `https://picsum.photos/seed/${name}/200/200`,
     bio: `Jsem ${name}, bydlím blízko ${user.region}. Mám ráda podobné koníčky jako ty: ${user.hobbies}.`
   };
 }
@@ -115,11 +117,19 @@ async function callAiApi(prompt, messages) {
 function App() {
   const root = document.getElementById('app');
   const profile = loadProfile();
+  // When no user profile is stored we start with onboarding.
   if (!profile) {
     renderOnboarding(root);
-  } else {
-    renderChat(root, profile);
+    return;
   }
+  // If the user has a profile but has not yet picked an AI partner, show selection.
+  const selectedAi = loadSelectedAi();
+  if (!selectedAi) {
+    renderSelection(root, profile);
+    return;
+  }
+  // Otherwise go straight to chat.
+  renderChat(root, profile);
 }
 
 function renderOnboarding(root) {
@@ -131,8 +141,9 @@ function renderOnboarding(root) {
   function submit(e) {
     e.preventDefault();
     saveProfile(state);
+    // After completing the onboarding, immediately show the partner selection.
     root.innerHTML = '';
-    renderChat(root, state);
+    renderSelection(root, state);
   }
   const form = createElement(
     'form',
@@ -158,8 +169,59 @@ function renderOnboarding(root) {
   root.appendChild(form);
 }
 
+// Save and load functions for selected AI partner. These are separate from
+// chat history so the user can come back later and chat with the same partner.
+function saveSelectedAi(ai) {
+  localStorage.setItem('selectedAi', JSON.stringify(ai));
+}
+function loadSelectedAi() {
+  const raw = localStorage.getItem('selectedAi');
+  return raw ? JSON.parse(raw) : null;
+}
+
+function renderSelection(root, user) {
+  // clear root first
+  root.innerHTML = '';
+  // generate a few AI partner profiles to choose from
+  const candidates = [];
+  const usedNames = new Set();
+  // We create 4 candidates using generateAiProfile to personalise to user
+  for (let i = 0; i < 4; i++) {
+    let ai;
+    // ensure unique names
+    do {
+      ai = generateAiProfile(user);
+    } while (usedNames.has(ai.name));
+    usedNames.add(ai.name);
+    candidates.push(ai);
+  }
+  const container = createElement('div', { className: 'selection' },
+    createElement('h2', {}, 'Vyber si partnerku'),
+    createElement('div', { className: 'profilesGrid' }, ...candidates.map(ai => {
+      return createElement('div', { className: 'profileCard' },
+        createElement('img', { src: ai.photo, alt: ai.name }),
+        createElement('h3', {}, `${ai.name} (${ai.age})`),
+        createElement('p', {}, ai.bio),
+        createElement('button', {
+          onclick: () => {
+            saveSelectedAi(ai);
+            root.innerHTML = '';
+            renderChat(root, user);
+          }
+        }, 'Začít chatovat')
+      );
+    }))
+  );
+  root.appendChild(container);
+}
+
 function renderChat(root, user) {
-  const ai = generateAiProfile(user);
+  // Either use the previously selected AI partner or generate a new one if none is saved.
+  let ai = loadSelectedAi();
+  if (!ai) {
+    ai = generateAiProfile(user);
+    saveSelectedAi(ai);
+  }
   let messages = loadChat();
   let paid = loadPaid();
   // pokud má uživatel jiný profil, resetuj historii
